@@ -1,13 +1,28 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo} from 'react';
 import PropTypes from 'prop-types';
+import {TransitionGroup, CSSTransition} from 'react-transition-group';
 
+import useMarvelService from '../../services/MarvelService';
 import Spinner from '../spinner/Spinner';
 import ErrorMessage from '../errorMessage/ErrorMessage';
-import useMarvelService from '../../services/MarvelService';
-import {TransitionGroup, CSSTransition} from 'react-transition-group';
 
 
 import './charList.scss';
+
+const setContent = (process,Component, newItemLoading) => {
+    switch (process) {
+        case 'waiting':
+            return <Spinner/>;
+        case 'loading':
+            return newItemLoading ? <Component/> : <Spinner/>;
+        case 'confirmed':
+            return <Component/>;
+        case 'error':
+            return <ErrorMessage/>;
+        default:
+            throw new Error ('Unexpected process state');
+    }
+}
 
 const CharList = (props) => {
 
@@ -16,28 +31,17 @@ const CharList = (props) => {
     const [offset, setOffset] = useState(210);
     const [charEnded, setCharEnded] = useState(false);
 
-    const {loading, error, getAllCharacters} = useMarvelService();
+    const {getAllCharacters, process, setProcess} = useMarvelService();
 
     useEffect(() => {
         onRequest(offset, true);
     }, [])
 
-    // handleScroll = () => {
-    //     // console.log(window.innerHeight);
-    //     // console.log(document.body.scrollHeight);
-    //     // console.log(document.documentElement.scrollTop);
-    //     if (document.body.scrollHeight <= window.innerHeight + document.documentElement.scrollTop) {
-    //         this.onRequest(this.state.offset)
-    //         console.log('yes');
-    //         console.log(this.state.charEnded)
-    //     }
-    //     };
-
     const onRequest = (offset, initial) => {
         initial ? setNewItemLoading(false) : setNewItemLoading(true);
         getAllCharacters(offset)
             .then(onCharLoaded)
-        // setError(false)
+            .then(() => setProcess('confirmed'))
     }
 
 
@@ -54,10 +58,6 @@ const CharList = (props) => {
         setOffset(offset => offset + 9);
         setCharEnded(charEnded => ended);
     }
-
-    // const onLoadChar = () => {
-    //     this.onRequest();
-    // }
 
     const itemRefs = useRef([]);
 
@@ -108,24 +108,14 @@ const CharList = (props) => {
         )
     }
 
-
-
-    
-    
-
-    const items = renderItems(char);
-
-    const errorMessage = error ? <ErrorMessage/> : null;
-    const spinner  = loading && !newItemLoading ? <Spinner/>: null
-    // const content = !(loading || error) ? items : null;
+    const elements = useMemo(() => {
+        return setContent(process, () => renderItems(char), newItemLoading)
+        // eslint-disable-next-line
+    }, [process]);
 
     return (
         <div className="char__list">
-        {/* <ul className="char__grid"> */}
-            {errorMessage}
-            {spinner}
-            {items}
-        {/* </ul> */}
+            {elements}
         <button 
             className="button button__main button__long"
             disabled={newItemLoading}
@@ -142,5 +132,3 @@ CharList.propTypes = {
 }
 
 export default CharList;
-
-//
