@@ -1,6 +1,6 @@
-# Getting Started with Create React App
+# Hello this is my pet project ready for resume!
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project about marvel heroes and use marvel api.
 
 ## Available Scripts
 
